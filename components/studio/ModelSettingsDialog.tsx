@@ -11,6 +11,7 @@ interface ModelSettingsDialogProps {
 }
 
 export function ModelSettingsDialog({ value, onChange, onClose }: ModelSettingsDialogProps) {
+  const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
   const [draft, setDraft] = useState(value);
   const [showKey, setShowKey] = useState(false);
   const [testState, setTestState] = useState<"idle" | "testing" | "success" | "error">("idle");
@@ -25,7 +26,7 @@ export function ModelSettingsDialog({ value, onChange, onClose }: ModelSettingsD
     setTestState("testing");
     setTestMessage("");
     try {
-      const response = await fetch("/api/ai/test", {
+      const response = await fetch(`${basePath}/api/ai/test`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(draft),

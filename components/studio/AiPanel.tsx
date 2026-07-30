@@ -55,6 +55,7 @@ function operationLabel(operation: AiWorkbookResponse["operations"][number]): st
 }
 
 export function AiPanel({ document, settings, onSettings, onApply }: AiPanelProps) {
+  const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
   const [prompt, setPrompt] = useState("");
   const [state, setState] = useState<"idle" | "thinking" | "applying" | "done" | "error">("idle");
@@ -77,7 +78,7 @@ export function AiPanel({ document, settings, onSettings, onApply }: AiPanelProp
     setPrompt("");
     setState("thinking");
     try {
-      const response = await fetch("/api/ai", {
+      const response = await fetch(`${basePath}/api/ai`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

@@ -24,6 +24,12 @@ npm run dev
 
 打开 [http://localhost:30244](http://localhost:30244)。工作台位于 `/studio`。
 
+部署到子路径时，需要在构建阶段设置路径前缀：
+
+```bash
+NEXT_PUBLIC_BASE_PATH=/vibe-excel npm run build
+```
+
 完整检查：
 
 ```bash

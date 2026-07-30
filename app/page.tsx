@@ -19,6 +19,8 @@ const capabilities = [
 ];
 
 export default function HomePage() {
+  const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+
   return (
     <main className="marketing-page">
       <nav className="marketing-nav" aria-label="主导航">
@@ -50,7 +52,7 @@ export default function HomePage() {
             <b>预算模型.xlsx</b>
             <i>已保存</i>
           </div>
-          <iframe src="/studio?embed=1" title="Vibe Excel 实时工作台" tabIndex={-1} />
+          <iframe src={`${basePath}/studio?embed=1`} title="Vibe Excel 实时工作台" tabIndex={-1} />
         </div>
       </section>
 
