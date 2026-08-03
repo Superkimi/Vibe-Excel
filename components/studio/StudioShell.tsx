@@ -20,6 +20,7 @@ import { AiPanel } from "@/components/studio/AiPanel";
 import { ModelSettingsDialog } from "@/components/studio/ModelSettingsDialog";
 import { PreviewDialog } from "@/components/studio/PreviewDialog";
 import { SchemaDialog } from "@/components/studio/SchemaDialog";
+import { useStudioI18n, type StudioMessageKey } from "@/components/studio/StudioI18n";
 import { WorkbookNavigator } from "@/components/studio/WorkbookNavigator";
 import { downloadExcel, importExcelFile } from "@/lib/excel-io";
 import { defaultModelSettings, type ModelSettings } from "@/lib/model-settings";
@@ -35,7 +36,14 @@ const UniverSheet = dynamic(
 const DOCUMENT_STORAGE_KEY = "vibe-excel-document-v1";
 const SETTINGS_STORAGE_KEY = "vibe-excel-model-settings-v1";
 
+interface LastChange {
+  key?: StudioMessageKey;
+  values?: Record<string, string | number>;
+  text?: string;
+}
+
 export function StudioShell() {
+  const { locale, setLocale, t } = useStudioI18n();
   const [document, setDocument] = useState<WorkbookDocument>(() => createBudgetWorkbook());
   const [revision, setRevision] = useState(0);
   const [navigatorTab, setNavigatorTab] = useState<"sheets" | "templates">("sheets");
@@ -46,7 +54,7 @@ export function StudioShell() {
   const [leftOpen, setLeftOpen] = useState(true);
   const [exporting, setExporting] = useState(false);
   const [saved, setSaved] = useState(true);
-  const [lastChange, setLastChange] = useState("已载入示例模型");
+  const [lastChange, setLastChange] = useState<LastChange>({ key: "studio.loadedExample" });
   const [history, setHistory] = useState<WorkbookDocument[]>([]);
   const [future, setFuture] = useState<WorkbookDocument[]>([]);
   const [api, setApi] = useState<FUniver | null>(null);
@@ -80,10 +88,10 @@ export function StudioShell() {
   const handleManualChange = useCallback((next: WorkbookDocument) => {
     setSaved(false);
     setDocument(next);
-    setLastChange("手工修改已同步");
+    setLastChange({ key: "studio.manualSynced" });
   }, []);
 
-  const commitExternal = useCallback((next: WorkbookDocument, summary: string) => {
+  const commitExternal = useCallback((next: WorkbookDocument, summary: string | LastChange) => {
     setSaved(false);
     setDocument((current) => {
       setHistory((items) => [...items.slice(-39), current]);
@@ -91,7 +99,7 @@ export function StudioShell() {
     });
     setFuture([]);
     setRevision((value) => value + 1);
-    setLastChange(summary);
+    setLastChange(typeof summary === "string" ? { text: summary } : summary);
   }, []);
 
   const undoExternal = async () => {
@@ -101,7 +109,7 @@ export function StudioShell() {
       setHistory((items) => items.slice(0, -1));
       setDocument(previous);
       setRevision((value) => value + 1);
-      setLastChange("已撤销 AI 或模板修改");
+      setLastChange({ key: "studio.undone" });
     } else {
       await api?.undo();
     }
@@ -114,7 +122,7 @@ export function StudioShell() {
       setFuture((items) => items.slice(1));
       setDocument(next);
       setRevision((value) => value + 1);
-      setLastChange("已重做修改");
+      setLastChange({ key: "studio.redone" });
     } else {
       await api?.redo();
     }
@@ -137,7 +145,7 @@ export function StudioShell() {
   const importFile = async (file?: File) => {
     if (!file) return;
     const imported = await importExcelFile(file);
-    commitExternal(imported, `已导入 ${file.name}`);
+    commitExternal(imported, { key: "studio.imported", values: { name: file.name } });
   };
 
   const addSheet = () => {
@@ -148,14 +156,14 @@ export function StudioShell() {
       afterSheetId: document.sheets.at(-1)?.id ?? null,
       sheet: { ...blank.sheets[0], id, name: `Sheet ${document.sheets.length + 1}` },
     }]);
-    commitExternal(next, "已添加工作表");
+    commitExternal(next, { key: "studio.sheetAdded" });
   };
 
   return (
     <main className={`studio-shell ${leftOpen ? "" : "left-collapsed"}`}>
       <header className="studio-toolbar">
         <div className="studio-brand">
-          <Link href="/" className="brand-mark" aria-label="返回首页"><Function weight="bold" /></Link>
+          <Link href="/" className="brand-mark" aria-label={t("studio.home")}><Function weight="bold" /></Link>
           <div>
             <input
               value={document.title}
@@ -163,21 +171,25 @@ export function StudioShell() {
                 setSaved(false);
                 setDocument((current) => ({ ...current, title: event.target.value, updatedAt: new Date().toISOString() }));
               }}
-              aria-label="工作簿名称"
+              aria-label={t("studio.workbookName")}
             />
-            <span><CloudCheck weight="fill" /> {saved ? "已保存到浏览器" : "正在保存"}<i />{lastChange}</span>
+            <span><CloudCheck weight="fill" /> {saved ? t("studio.saved") : t("studio.saving")}<i />{lastChange.key ? t(lastChange.key, lastChange.values) : lastChange.text}</span>
           </div>
         </div>
         <div className="toolbar-actions">
-          <button className="icon-button" onClick={() => setLeftOpen((value) => !value)} aria-label="切换目录"><SidebarSimple /></button>
+          <button className="icon-button" onClick={() => setLeftOpen((value) => !value)} aria-label={t("studio.toggleCatalog")}><SidebarSimple /></button>
           <span className="toolbar-divider" />
-          <button className="icon-button" onClick={undoExternal} aria-label="撤销"><ArrowCounterClockwise /></button>
-          <button className="icon-button" onClick={redoExternal} aria-label="重做"><ArrowClockwise /></button>
+          <button className="icon-button" onClick={undoExternal} aria-label={t("studio.undo")}><ArrowCounterClockwise /></button>
+          <button className="icon-button" onClick={redoExternal} aria-label={t("studio.redo")}><ArrowClockwise /></button>
           <span className="toolbar-divider" />
-          <button className="button button-secondary" onClick={() => fileInputRef.current?.click()}><FileArrowUp /> 导入</button>
-          <button className="button button-secondary" onClick={() => setPreviewOpen(true)}><Eye /> 预览</button>
-          <button className="button button-primary" onClick={exportFile} disabled={exporting}><DownloadSimple /> {exporting ? "正在导出" : "导出 XLSX"} <CaretDown /></button>
-          <Link href="/" className="icon-button home-link" aria-label="产品首页"><House /></Link>
+          <button className="button button-secondary" onClick={() => fileInputRef.current?.click()}><FileArrowUp /> {t("studio.import")}</button>
+          <button className="button button-secondary" onClick={() => setPreviewOpen(true)}><Eye /> {t("studio.preview")}</button>
+          <button className="button button-primary" onClick={exportFile} disabled={exporting}><DownloadSimple /> {exporting ? t("studio.exporting") : t("studio.export")} <CaretDown /></button>
+          <div className="locale-switcher" role="group" aria-label={t("studio.switchLanguage")}>
+            <button type="button" data-testid="locale-zh" aria-label={t("studio.chinese")} aria-pressed={locale === "zh"} className={locale === "zh" ? "active" : ""} onClick={() => setLocale("zh")}>中</button>
+            <button type="button" data-testid="locale-en" aria-label={t("studio.english")} aria-pressed={locale === "en"} className={locale === "en" ? "active" : ""} onClick={() => setLocale("en")}>EN</button>
+          </div>
+          <Link href="/" className="icon-button home-link" aria-label={t("studio.productHome")}><House /></Link>
         </div>
         <input ref={fileInputRef} className="visually-hidden" type="file" accept=".xlsx,.xlsm" onChange={(event) => importFile(event.target.files?.[0])} />
       </header>
@@ -187,7 +199,7 @@ export function StudioShell() {
           document={document}
           activeTab={navigatorTab}
           onActiveTabChange={setNavigatorTab}
-          onTemplate={(create) => commitExternal(create(), "已应用工作簿模板")}
+          onTemplate={(create) => commitExternal(create(), { key: "studio.templateApplied" })}
           onShowSchema={() => setSchemaOpen(true)}
           onAddSheet={addSheet}
         />
@@ -195,8 +207,9 @@ export function StudioShell() {
 
       <section className="spreadsheet-stage">
         <UniverSheet
-          key={revision}
+          key={`${revision}-${locale}`}
           document={document}
+          locale={locale}
           onDocumentChange={handleManualChange}
           onApiReady={handleApiReady}
         />

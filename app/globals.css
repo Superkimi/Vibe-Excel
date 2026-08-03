@@ -794,6 +794,40 @@ select:focus-visible {
   background: var(--line);
 }
 
+.locale-switcher {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: 4px;
+  padding: 3px;
+  border: 1px solid var(--line-soft);
+  border-radius: 8px;
+  background: var(--surface-2);
+}
+
+.locale-switcher button {
+  min-width: 27px;
+  height: 25px;
+  padding: 0 5px;
+  border: 0;
+  border-radius: 5px;
+  color: var(--subtle);
+  background: transparent;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.locale-switcher button:hover {
+  color: var(--ink);
+}
+
+.locale-switcher button.active {
+  color: var(--accent-strong);
+  background: var(--surface);
+  box-shadow: 0 1px 3px rgba(65, 50, 80, 0.1);
+}
+
 .home-link {
   margin-left: 2px;
 }

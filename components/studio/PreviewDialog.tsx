@@ -2,6 +2,7 @@
 
 import { DownloadSimple, X } from "@phosphor-icons/react";
 import { indexToColumn, parseCellAddress } from "@/lib/address";
+import { useStudioI18n } from "@/components/studio/StudioI18n";
 import type { WorkbookDocument } from "@/lib/workbook-schema";
 
 interface PreviewDialogProps {
@@ -17,6 +18,7 @@ function displayValue(value: string | number | boolean | null): string {
 }
 
 export function PreviewDialog({ document, onClose, onExport }: PreviewDialogProps) {
+  const { t } = useStudioI18n();
   const active = document.sheets.find((sheet) => sheet.id === document.activeSheetId) ?? document.sheets[0];
   const positions = Object.keys(active.cells).map(parseCellAddress);
   const maxRow = Math.min(40, Math.max(10, ...positions.map((position) => position.row + 1)));
@@ -25,10 +27,10 @@ export function PreviewDialog({ document, onClose, onExport }: PreviewDialogProp
   return (
     <div className="preview-overlay">
       <header>
-        <div><b>{document.title}</b><span>{active.name} 的交付预览</span></div>
+        <div><b>{document.title}</b><span>{t("preview.delivery", { sheet: active.name })}</span></div>
         <div>
-          <button className="button button-secondary" onClick={onExport}><DownloadSimple /> 导出 XLSX</button>
-          <button className="icon-button" onClick={onClose} aria-label="关闭预览"><X /></button>
+          <button className="button button-secondary" onClick={onExport}><DownloadSimple /> {t("preview.export")}</button>
+          <button className="icon-button" onClick={onClose} aria-label={t("preview.close")}><X /></button>
         </div>
       </header>
       <div className="preview-canvas">

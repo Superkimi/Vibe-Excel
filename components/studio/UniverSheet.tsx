@@ -4,8 +4,10 @@ import { useEffect, useRef } from "react";
 import { LocaleType, createUniver, mergeLocales, type FUniver, type IWorkbookData } from "@univerjs/presets";
 import { UniverSheetsCorePreset } from "@univerjs/preset-sheets-core";
 import zhCN from "@univerjs/preset-sheets-core/locales/zh-CN";
+import enUS from "@univerjs/preset-sheets-core/locales/en-US";
 import "@univerjs/preset-sheets-core/lib/index.css";
 import type { WorkbookDocument } from "@/lib/workbook-schema";
+import type { StudioLocale } from "@/components/studio/StudioI18n";
 import {
   mergeUniverSnapshotIntoWorkbook,
   workbookToUniverSnapshot,
@@ -14,6 +16,7 @@ import {
 
 interface UniverSheetProps {
   document: WorkbookDocument;
+  locale: StudioLocale;
   onDocumentChange: (document: WorkbookDocument) => void;
   onApiReady: (api: FUniver | null) => void;
 }
@@ -26,7 +29,7 @@ const ignoredCommands = new Set([
   "sheet.operation.set-zoom-ratio",
 ]);
 
-export function UniverSheet({ document, onDocumentChange, onApiReady }: UniverSheetProps) {
+export function UniverSheet({ document, locale, onDocumentChange, onApiReady }: UniverSheetProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const documentRef = useRef(document);
   const changeRef = useRef(onDocumentChange);
@@ -43,9 +46,10 @@ export function UniverSheet({ document, onDocumentChange, onApiReady }: UniverSh
     mount.style.height = "100%";
     containerRef.current.replaceChildren(mount);
     const { univer, univerAPI } = createUniver({
-      locale: LocaleType.ZH_CN,
+      locale: locale === "en" ? LocaleType.EN_US : LocaleType.ZH_CN,
       locales: {
         [LocaleType.ZH_CN]: mergeLocales(zhCN),
+        [LocaleType.EN_US]: mergeLocales(enUS),
       },
       presets: [
         UniverSheetsCorePreset({
@@ -89,7 +93,7 @@ export function UniverSheet({ document, onDocumentChange, onApiReady }: UniverSh
         mount.remove();
       }, 0);
     };
-  }, [onApiReady]);
+  }, [locale, onApiReady]);
 
   return <div ref={containerRef} className="univer-host" data-testid="spreadsheet-editor" />;
 }

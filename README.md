@@ -11,6 +11,7 @@ Vibe Excel 是一个 Schema 先行、AI 原生的在线电子表格工作台。�
 - 结构化工作簿操作，可审计、可回滚，不直接让模型操纵 UI
 - ExcelJS 驱动的 XLSX 导入和导出
 - JSON Schema 查看与下载，代码即模型
+- 工作台界面支持中文 / English 切换，语言偏好保存在当前浏览器；Univer 表格菜单同步切换
 - 单元测试、API 测试、XLSX 回读测试和 Playwright 端到端测试
 
 ## 启动

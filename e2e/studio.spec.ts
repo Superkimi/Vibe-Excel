@@ -23,3 +23,17 @@ test("marketing page uses a live product preview and reaches the studio", async 
   await page.getByRole("link", { name: "开始建模" }).click();
   await expect(page).toHaveURL(/\/studio$/);
 });
+
+test("studio switches its interface between Chinese and English", async ({ page }) => {
+  await page.goto("/studio");
+  await page.getByTestId("locale-en").click();
+
+  await expect(page.getByLabel("Workbook name")).toHaveValue("年度预算模型");
+  await expect(page.getByRole("button", { name: "Preview" })).toBeVisible();
+  await expect(page.getByText("What should this sheet become?", { exact: true })).toBeVisible();
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
+
+  await page.getByTestId("locale-zh").click();
+  await expect(page.getByRole("button", { name: "预览" })).toBeVisible();
+  await expect(page.locator("html")).toHaveAttribute("lang", "zh-CN");
+});

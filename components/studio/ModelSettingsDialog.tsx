@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Check, Eye, EyeSlash, X } from "@phosphor-icons/react";
 import { providerDefaults, type ModelSettings } from "@/lib/model-settings";
+import { useStudioI18n } from "@/components/studio/StudioI18n";
 
 interface ModelSettingsDialogProps {
   value: ModelSettings;
@@ -11,6 +12,7 @@ interface ModelSettingsDialogProps {
 }
 
 export function ModelSettingsDialog({ value, onChange, onClose }: ModelSettingsDialogProps) {
+  const { t } = useStudioI18n();
   const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
   const [draft, setDraft] = useState(value);
   const [showKey, setShowKey] = useState(false);
@@ -32,9 +34,9 @@ export function ModelSettingsDialog({ value, onChange, onClose }: ModelSettingsD
         body: JSON.stringify(draft),
       });
       const result = await response.json() as { ok?: boolean; latencyMs?: number; error?: string };
-      if (!response.ok || !result.ok) throw new Error(result.error || "连接失败");
+      if (!response.ok || !result.ok) throw new Error(result.error || t("settings.connectionFailed"));
       setTestState("success");
-      setTestMessage(`连接成功，${result.latencyMs ?? 0} ms`);
+      setTestMessage(t("settings.connectionSuccess", { latency: result.latencyMs ?? 0 }));
     } catch (error) {
       setTestState("error");
       setTestMessage(error instanceof Error ? error.message : String(error));
@@ -50,12 +52,12 @@ export function ModelSettingsDialog({ value, onChange, onClose }: ModelSettingsD
     <div className="dialog-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
       <section className="settings-dialog" role="dialog" aria-modal="true" aria-labelledby="model-settings-title">
         <header>
-          <div><h2 id="model-settings-title">模型连接</h2><p>配置只保存在当前浏览器。Key 不会写入仓库。</p></div>
-          <button className="icon-button" onClick={onClose} aria-label="关闭"><X /></button>
+          <div><h2 id="model-settings-title">{t("settings.title")}</h2><p>{t("settings.description")}</p></div>
+          <button className="icon-button" onClick={onClose} aria-label={t("settings.close")}><X /></button>
         </header>
         <div className="settings-form">
           <label>
-            <span>服务类型</span>
+            <span>{t("settings.provider")}</span>
             <select
               value={draft.provider}
               onChange={(event) => {
@@ -63,37 +65,37 @@ export function ModelSettingsDialog({ value, onChange, onClose }: ModelSettingsD
                 setDraft((current) => ({ ...current, provider, ...providerDefaults[provider] }));
               }}
             >
-              <option value="openai-compatible">OpenAI 兼容接口</option>
+              <option value="openai-compatible">{t("settings.openai")}</option>
               <option value="anthropic">Anthropic</option>
               <option value="google">Google Gemini</option>
             </select>
           </label>
           <label>
-            <span>Base URL</span>
+            <span>{t("settings.baseUrl")}</span>
             <input value={draft.baseUrl} onChange={(event) => update("baseUrl", event.target.value)} spellCheck={false} />
-            <small>支持 OpenRouter、DeepSeek、Moonshot 和本地兼容网关。</small>
+            <small>{t("settings.baseUrlHelp")}</small>
           </label>
           <label>
-            <span>模型名称</span>
-            <input value={draft.model} onChange={(event) => update("model", event.target.value)} placeholder="例如 gpt-5.4" spellCheck={false} />
+            <span>{t("settings.model")}</span>
+            <input value={draft.model} onChange={(event) => update("model", event.target.value)} placeholder={t("settings.modelPlaceholder")} spellCheck={false} />
           </label>
           <label>
-            <span>API Key</span>
+            <span>{t("settings.apiKey")}</span>
             <div className="secret-input">
               <input type={showKey ? "text" : "password"} value={draft.apiKey} onChange={(event) => update("apiKey", event.target.value)} autoComplete="off" spellCheck={false} />
-              <button onClick={() => setShowKey((current) => !current)} aria-label={showKey ? "隐藏 Key" : "显示 Key"}>{showKey ? <EyeSlash /> : <Eye />}</button>
+              <button onClick={() => setShowKey((current) => !current)} aria-label={showKey ? t("settings.hideKey") : t("settings.showKey")}>{showKey ? <EyeSlash /> : <Eye />}</button>
             </div>
           </label>
           <label>
-            <span>创造性 <b>{draft.temperature.toFixed(1)}</b></span>
+            <span>{t("settings.temperature", { value: draft.temperature.toFixed(1) })}</span>
             <input type="range" min="0" max="1" step="0.1" value={draft.temperature} onChange={(event) => update("temperature", Number(event.target.value))} />
-            <small>表格建模建议保持在 0.0-0.3，减少公式和结构漂移。</small>
+            <small>{t("settings.temperatureHelp")}</small>
           </label>
         </div>
         {testMessage && <p className={`connection-result ${testState}`}><Check /> {testMessage}</p>}
         <footer>
-          <button className="button button-secondary" onClick={testConnection} disabled={testState === "testing"}>{testState === "testing" ? "正在测试" : "测试连接"}</button>
-          <button className="button button-primary" onClick={save}>保存配置</button>
+          <button className="button button-secondary" onClick={testConnection} disabled={testState === "testing"}>{testState === "testing" ? t("settings.testing") : t("settings.test")}</button>
+          <button className="button button-primary" onClick={save}>{t("settings.save")}</button>
         </footer>
       </section>
     </div>
