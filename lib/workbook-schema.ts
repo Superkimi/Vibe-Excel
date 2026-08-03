@@ -5,6 +5,7 @@ const finite = z.number().finite();
 const color = z.string().regex(/^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/);
 const cellAddress = z.string().regex(/^[A-Z]{1,3}[1-9][0-9]{0,5}$/);
 const rangeAddress = z.string().regex(/^[A-Z]{1,3}[1-9][0-9]{0,5}(?::[A-Z]{1,3}[1-9][0-9]{0,5})?$/);
+const columnAddress = z.string().regex(/^[A-Z]{1,3}$/);
 
 export const cellStyleSchema = z.object({
   background: color.optional(),
@@ -54,6 +55,19 @@ export const workbookThemeSchema = z.object({
   bodyFont: z.string().max(120).default("Geist"),
 }).strict();
 
+export const chartSchema = z.object({
+  id: identifier,
+  type: z.enum(["bar", "line", "scatter", "histogram", "correlation"]),
+  title: z.string().min(1).max(180),
+  sheetId: identifier,
+  range: rangeAddress.nullable().default(null),
+  xColumn: columnAddress.nullable().default(null),
+  yColumns: z.array(columnAddress).min(1).max(16),
+  aggregation: z.enum(["sum", "average", "count"]).default("sum"),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+}).strict();
+
 export const workbookSchema = z.object({
   format: z.literal("vibe-excel/1"),
   version: z.literal(1),
@@ -62,6 +76,7 @@ export const workbookSchema = z.object({
   activeSheetId: identifier,
   theme: workbookThemeSchema,
   sheets: z.array(sheetSchema).min(1).max(100),
+  charts: z.array(chartSchema).max(40).default([]),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 }).strict().superRefine((workbook, context) => {
@@ -80,12 +95,25 @@ export const workbookSchema = z.object({
   if (!ids.has(workbook.activeSheetId)) {
     context.addIssue({ code: "custom", path: ["activeSheetId"], message: "Active sheet must exist" });
   }
+  const chartIds = new Set<string>();
+  for (const [index, chart] of workbook.charts.entries()) {
+    if (chartIds.has(chart.id)) {
+      context.addIssue({ code: "custom", path: ["charts", index, "id"], message: "Chart IDs must be unique" });
+    }
+    if (!ids.has(chart.sheetId)) {
+      context.addIssue({ code: "custom", path: ["charts", index, "sheetId"], message: "Chart sheet must exist" });
+    }
+    chartIds.add(chart.id);
+  }
 });
 
 export type WorkbookDocument = z.infer<typeof workbookSchema>;
 export type WorkbookSheet = z.infer<typeof sheetSchema>;
 export type WorkbookCell = z.infer<typeof cellSchema>;
 export type CellStyle = z.infer<typeof cellStyleSchema>;
+export type WorkbookChart = z.infer<typeof chartSchema>;
+export type ChartType = WorkbookChart["type"];
+export type ChartAggregation = WorkbookChart["aggregation"];
 
 const cellPatchSchema = cellSchema.partial().strict();
 
@@ -153,6 +181,19 @@ export const workbookOperationSchema = z.discriminatedUnion("op", [
   z.object({
     op: z.literal("set_title"),
     title: z.string().min(1).max(180),
+  }).strict(),
+  z.object({
+    op: z.literal("add_chart"),
+    chart: chartSchema,
+  }).strict(),
+  z.object({
+    op: z.literal("update_chart"),
+    chartId: identifier,
+    patch: chartSchema.partial().omit({ id: true }),
+  }).strict(),
+  z.object({
+    op: z.literal("delete_chart"),
+    chartId: identifier,
   }).strict(),
   z.object({
     op: z.literal("replace_workbook"),

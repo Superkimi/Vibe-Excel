@@ -2,6 +2,7 @@
 
 import { DownloadSimple, X } from "@phosphor-icons/react";
 import { indexToColumn, parseCellAddress } from "@/lib/address";
+import { ChartView } from "@/components/studio/ChartView";
 import { useStudioI18n } from "@/components/studio/StudioI18n";
 import type { WorkbookDocument } from "@/lib/workbook-schema";
 
@@ -61,6 +62,10 @@ export function PreviewDialog({ document, onClose, onExport }: PreviewDialogProp
               }),
             ])}
           </div>
+          <section className="preview-chart-section">
+            <div className="preview-section-heading"><b>{t("preview.charts")}</b><span>{document.charts.length}</span></div>
+            {document.charts.length === 0 ? <div className="preview-no-charts">{t("preview.noCharts")}</div> : <div className="preview-chart-grid">{document.charts.map((chart) => <ChartView key={chart.id} chart={chart} sheet={document.sheets.find((sheet) => sheet.id === chart.sheetId)} compact />)}</div>}
+          </section>
         </div>
       </div>
     </div>

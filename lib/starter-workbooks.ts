@@ -50,6 +50,7 @@ export function createBlankWorkbook(title = "未命名工作簿"): WorkbookDocum
       bodyFont: "Geist",
     },
     sheets: [sheet("sheet-1", "Sheet 1", {})],
+    charts: [],
     createdAt: timestamp,
     updatedAt: timestamp,
   };
@@ -100,6 +101,7 @@ export function createBudgetWorkbook(): WorkbookDocument {
       C2: { value: "用于收入预测", type: "string" },
     }),
   ];
+  workbook.charts = [];
   return workbook;
 }
 
@@ -123,6 +125,7 @@ export function createProjectWorkbook(): WorkbookDocument {
     D3: { value: "2026-08-10", type: "date", numberFormat: "yyyy-mm-dd" },
     E3: { value: "未开始", type: "string" },
   })];
+  workbook.charts = [];
   return workbook;
 }
 

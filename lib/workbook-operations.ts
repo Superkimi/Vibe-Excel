@@ -31,6 +31,7 @@ export function applyWorkbookOperations(
   operations: WorkbookOperation[],
 ): WorkbookDocument {
   let next = cloneWorkbook(current);
+  next.charts ??= [];
 
   for (const operation of operations) {
     if (operation.op === "replace_workbook") {
@@ -69,9 +70,35 @@ export function applyWorkbookOperations(
       const index = next.sheets.findIndex((sheet) => sheet.id === operation.sheetId);
       if (index < 0) throw new Error(`Sheet not found: ${operation.sheetId}`);
       next.sheets.splice(index, 1);
+      next.charts = next.charts.filter((chart) => chart.sheetId !== operation.sheetId);
       if (next.activeSheetId === operation.sheetId) {
         next.activeSheetId = next.sheets[Math.max(0, index - 1)].id;
       }
+      continue;
+    }
+
+    if (operation.op === "add_chart") {
+      if (next.charts.some((chart) => chart.id === operation.chart.id)) {
+        throw new Error(`Chart already exists: ${operation.chart.id}`);
+      }
+      findSheet(next, operation.chart.sheetId);
+      next.charts.push(structuredClone(operation.chart));
+      continue;
+    }
+
+    if (operation.op === "update_chart") {
+      const index = next.charts.findIndex((chart) => chart.id === operation.chartId);
+      if (index < 0) throw new Error(`Chart not found: ${operation.chartId}`);
+      const updated = { ...next.charts[index], ...operation.patch, id: next.charts[index].id };
+      if (updated.sheetId) findSheet(next, updated.sheetId);
+      next.charts[index] = updated;
+      continue;
+    }
+
+    if (operation.op === "delete_chart") {
+      const index = next.charts.findIndex((chart) => chart.id === operation.chartId);
+      if (index < 0) throw new Error(`Chart not found: ${operation.chartId}`);
+      next.charts.splice(index, 1);
       continue;
     }
 

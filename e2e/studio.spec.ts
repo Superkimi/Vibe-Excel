@@ -11,6 +11,13 @@ test("loads the real spreadsheet studio and opens supporting tools", async ({ pa
   await expect(page.getByText("年度预算 的交付预览")).toBeVisible();
   await page.getByRole("button", { name: "关闭预览" }).click();
 
+  await page.getByRole("button", { name: "图表" }).click();
+  await expect(page.getByTestId("chart-dialog")).toBeVisible();
+  await expect(page.getByText("实时预览", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "保存图表" }).click();
+  await expect(page.getByText("1 个图表", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "关闭图表工作台" }).click();
+
   await page.getByRole("button", { name: "Schema 代码" }).click();
   await expect(page.getByRole("dialog", { name: "工作簿 Schema" })).toBeVisible();
   await expect(page.getByText(/"format": "vibe-excel\/1"/)).toBeVisible();

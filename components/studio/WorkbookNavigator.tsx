@@ -65,6 +65,7 @@ export function WorkbookNavigator({
               <div><dt>{t("nav.worksheets")}</dt><dd>{document.sheets.length}</dd></div>
               <div><dt>{t("nav.effectiveCells")}</dt><dd>{populatedCells}</dd></div>
               <div><dt>{t("nav.formulas")}</dt><dd>{formulaCells}</dd></div>
+              <div><dt>{t("nav.charts")}</dt><dd>{document.charts.length}</dd></div>
             </dl>
           </div>
 

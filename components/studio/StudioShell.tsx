@@ -6,6 +6,7 @@ import type { FUniver } from "@univerjs/presets";
 import {
   ArrowCounterClockwise,
   ArrowClockwise,
+  ChartBar,
   CaretDown,
   CloudCheck,
   DownloadSimple,
@@ -17,6 +18,7 @@ import {
 } from "@phosphor-icons/react";
 import Link from "next/link";
 import { AiPanel } from "@/components/studio/AiPanel";
+import { ChartDialog } from "@/components/studio/ChartDialog";
 import { ModelSettingsDialog } from "@/components/studio/ModelSettingsDialog";
 import { PreviewDialog } from "@/components/studio/PreviewDialog";
 import { SchemaDialog } from "@/components/studio/SchemaDialog";
@@ -26,7 +28,7 @@ import { downloadExcel, importExcelFile } from "@/lib/excel-io";
 import { defaultModelSettings, type ModelSettings } from "@/lib/model-settings";
 import { applyWorkbookOperations } from "@/lib/workbook-operations";
 import { createBudgetWorkbook, createBlankWorkbook } from "@/lib/starter-workbooks";
-import type { WorkbookDocument } from "@/lib/workbook-schema";
+import { workbookSchema, type WorkbookDocument } from "@/lib/workbook-schema";
 
 const UniverSheet = dynamic(
   () => import("@/components/studio/UniverSheet").then((module) => module.UniverSheet),
@@ -50,6 +52,7 @@ export function StudioShell() {
   const [settings, setSettings] = useState<ModelSettings>(defaultModelSettings);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [chartsOpen, setChartsOpen] = useState(false);
   const [schemaOpen, setSchemaOpen] = useState(false);
   const [leftOpen, setLeftOpen] = useState(true);
   const [exporting, setExporting] = useState(false);
@@ -66,7 +69,7 @@ export function StudioShell() {
       const storedSettings = localStorage.getItem(SETTINGS_STORAGE_KEY);
       queueMicrotask(() => {
         if (storedDocument) {
-          setDocument(JSON.parse(storedDocument) as WorkbookDocument);
+          setDocument(workbookSchema.parse(JSON.parse(storedDocument)));
           setRevision((value) => value + 1);
         }
         if (storedSettings) setSettings({ ...defaultModelSettings, ...JSON.parse(storedSettings) as ModelSettings });
@@ -184,6 +187,7 @@ export function StudioShell() {
           <span className="toolbar-divider" />
           <button className="button button-secondary" onClick={() => fileInputRef.current?.click()}><FileArrowUp /> {t("studio.import")}</button>
           <button className="button button-secondary" onClick={() => setPreviewOpen(true)}><Eye /> {t("studio.preview")}</button>
+          <button className="button button-secondary" onClick={() => setChartsOpen(true)}><ChartBar /> {t("studio.charts")}</button>
           <button className="button button-primary" onClick={exportFile} disabled={exporting}><DownloadSimple /> {exporting ? t("studio.exporting") : t("studio.export")} <CaretDown /></button>
           <div className="locale-switcher" role="group" aria-label={t("studio.switchLanguage")}>
             <button type="button" data-testid="locale-zh" aria-label={t("studio.chinese")} aria-pressed={locale === "zh"} className={locale === "zh" ? "active" : ""} onClick={() => setLocale("zh")}>中</button>
@@ -218,6 +222,7 @@ export function StudioShell() {
       <AiPanel document={document} settings={settings} onSettings={() => setSettingsOpen(true)} onApply={commitExternal} />
 
       {settingsOpen && <ModelSettingsDialog value={settings} onChange={saveSettings} onClose={() => setSettingsOpen(false)} />}
+      {chartsOpen && <ChartDialog document={document} onClose={() => setChartsOpen(false)} onApply={commitExternal} />}
       {previewOpen && <PreviewDialog document={document} onClose={() => setPreviewOpen(false)} onExport={exportFile} />}
       {schemaOpen && <SchemaDialog document={document} onClose={() => setSchemaOpen(false)} />}
     </main>

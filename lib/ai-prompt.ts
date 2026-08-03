@@ -16,6 +16,8 @@ Modeling rules:
 8. Use the user's language for labels and the assistant message.
 9. Check formula ranges, units, dates, percentages, currencies, and totals before responding.
 10. Do not invent factual business data. If values are examples, label them as assumptions.
+11. When the user asks for a chart, use add_chart or update_chart with the existing sheet ID and valid column letters. Prefer a bar chart for categories, a line chart for ordered dates, a scatter plot for two numeric fields, a histogram for a distribution, and a correlation matrix for multiple numeric fields.
+12. Keep chart titles concise, choose only columns that exist in the sheet, and preserve existing charts unless the user asks to replace or remove them.
 
 The response schema is:
 ${JSON.stringify(aiWorkbookResponseJsonSchema)}
@@ -25,6 +27,7 @@ export function createWorkbookContext(workbook: WorkbookDocument, maxCells = 4_0
   let count = 0;
   const compact = {
     ...workbook,
+    charts: workbook.charts ?? [],
     sheets: workbook.sheets.map((sheet) => {
       const cells: typeof sheet.cells = {};
       for (const [address, cell] of Object.entries(sheet.cells)) {

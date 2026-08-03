@@ -49,4 +49,49 @@ describe("workbook operations", () => {
       cells: { AA999: { value: 1, type: "number" } },
     }])).toThrow(/outside/);
   });
+
+  it("adds, updates, and removes charts as first-class model operations", () => {
+    const source = createBudgetWorkbook();
+    const timestamp = new Date().toISOString();
+    const chart = {
+      id: "chart-budget",
+      type: "bar" as const,
+      title: "季度收入",
+      sheetId: "budget",
+      range: null,
+      xColumn: "A",
+      yColumns: ["B", "C"],
+      aggregation: "sum" as const,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    };
+    const added = applyWorkbookOperations(source, [{ op: "add_chart", chart }]);
+    expect(added.charts).toHaveLength(1);
+    const updated = applyWorkbookOperations(added, [{ op: "update_chart", chartId: chart.id, patch: { title: "收入对比" } }]);
+    expect(updated.charts[0].title).toBe("收入对比");
+    const removed = applyWorkbookOperations(updated, [{ op: "delete_chart", chartId: chart.id }]);
+    expect(removed.charts).toHaveLength(0);
+  });
+
+  it("removes charts when their source sheet is deleted", () => {
+    const source = createBudgetWorkbook();
+    const timestamp = new Date().toISOString();
+    const withChart = applyWorkbookOperations(source, [{
+      op: "add_chart",
+      chart: {
+        id: "chart-assumptions",
+        type: "histogram",
+        title: "假设",
+        sheetId: "assumptions",
+        range: null,
+        xColumn: null,
+        yColumns: ["B"],
+        aggregation: "sum",
+        createdAt: timestamp,
+        updatedAt: timestamp,
+      },
+    }]);
+    const next = applyWorkbookOperations(withChart, [{ op: "delete_sheet", sheetId: "assumptions" }]);
+    expect(next.charts).toHaveLength(0);
+  });
 });

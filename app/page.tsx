@@ -2,6 +2,7 @@ import Link from "next/link";
 import {
   ArrowRight,
   BracketsCurly,
+  ChartBar,
   ChatCircleDots,
   CheckCircle,
   DownloadSimple,
@@ -15,7 +16,7 @@ const capabilities = [
   { icon: ChatCircleDots, title: "聊出模型", text: "从目标和假设出发，生成结构、公式与格式。" },
   { icon: GridFour, title: "继续手工编辑", text: "保留完整表格体验，AI 不会拿走控制权。" },
   { icon: BracketsCurly, title: "Schema 即模型", text: "每次改动先校验，失败不会污染现有工作簿。" },
-  { icon: DownloadSimple, title: "交付 XLSX", text: "公式、数字格式、尺寸和冻结窗格一起导出。" },
+  { icon: ChartBar, title: "数据变成图表", text: "从字段类型推断柱状、折线、散点、分布和相关关系。" },
 ];
 
 export default function HomePage() {
